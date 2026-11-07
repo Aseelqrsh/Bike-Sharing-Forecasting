@@ -1,4 +1,5 @@
 """
+ECE 9603/9063 - Data Analytics Foundations
 Assignment 1: Forecasting
 Module: evaluate.py
 Purpose: Computes evaluation metrics (MAE, RMSE, R²) and generates
@@ -62,7 +63,8 @@ def plot_forecast_comparison(y_test, predictions_dict, output_path, window_start
     # Colors and styles for each model
     styles = {
         'Multivariate Linear Regression': {'color': '#d62728', 'linestyle': '--', 'linewidth': 2.0},
-        'Support Vector Regression (RBF)': {'color': '#1f77b4', 'linestyle': '-', 'linewidth': 2.2}
+        'Support Vector Regression (RBF)': {'color': '#1f77b4', 'linestyle': '-.', 'linewidth': 2.0},
+        'Random Forest Regressor': {'color': '#2ca02c', 'linestyle': '-', 'linewidth': 2.4}
     }
     
     # 2. Model forecasts
