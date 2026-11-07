@@ -1,7 +1,9 @@
+import os
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
+from sklearn.svm import SVR
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 # 1. Load the dataset
@@ -40,20 +42,17 @@ X_test_scaled = scaler.transform(X_test)
 print("\nFeatures standardized successfully!")
 
 # 5. Model 1: Multivariate Linear Regression
-print("\n" + "=" * 45)
+print("\n" + "=" * 50)
 print("Training Model 1: Multivariate Linear Regression")
-print("=" * 45)
+print("=" * 50)
 
 lr_model = LinearRegression()
 lr_model.fit(X_train_scaled, y_train)
 
 # Predict on unseen future test set
 y_pred_lr = lr_model.predict(X_test_scaled)
-
-# Clamping: physical reality check (rentals cannot be negative)
 y_pred_lr = np.clip(y_pred_lr, 0, None)
 
-# Evaluate metrics
 mae_lr = mean_absolute_error(y_test, y_pred_lr)
 rmse_lr = np.sqrt(mean_squared_error(y_test, y_pred_lr))
 r2_lr = r2_score(y_test, y_pred_lr)
@@ -62,3 +61,24 @@ print(f"Linear Regression Results (on Unseen Test Set):")
 print(f"  MAE:  {mae_lr:.2f} bikes")
 print(f"  RMSE: {rmse_lr:.2f} bikes")
 print(f"  R²:   {r2_lr:.4f}")
+
+# 6. Model 2: Support Vector Regression (SVR with RBF Kernel)
+print("\n" + "=" * 50)
+print("Training Model 2: Support Vector Regression (RBF)")
+print("=" * 50)
+
+svr_model = SVR(kernel='rbf', C=100.0, epsilon=10.0)
+svr_model.fit(X_train_scaled, y_train)
+
+# Predict on unseen future test set
+y_pred_svr = svr_model.predict(X_test_scaled)
+y_pred_svr = np.clip(y_pred_svr, 0, None)
+
+mae_svr = mean_absolute_error(y_test, y_pred_svr)
+rmse_svr = np.sqrt(mean_squared_error(y_test, y_pred_svr))
+r2_svr = r2_score(y_test, y_pred_svr)
+
+print(f"SVR Results (on Unseen Test Set):")
+print(f"  MAE:  {mae_svr:.2f} bikes")
+print(f"  RMSE: {rmse_svr:.2f} bikes")
+print(f"  R²:   {r2_svr:.4f}")
