@@ -1,84 +1,71 @@
+"""
+Assignment 1: Forecasting
+Script: train_forecast.py (Master Pipeline Entry Point)
+Purpose: Coordinates data loading, trains the 2 distinct forecasting models,
+         evaluates metrics, and exports comparison tables & figures.
+"""
+
 import os
-import pandas as pd
-import numpy as np
-from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LinearRegression
-from sklearn.svm import SVR
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+import sys
 
-# 1. Load the dataset
-df = pd.read_csv("data/hour.csv")
+# Ensure src directory is in sys.path
+sys.path.append(os.path.dirname(__file__))
 
-# 2. Define the 12 predictive features and the target
-features = [
-    'season', 'yr', 'mnth', 'hr', 'holiday', 
-    'weekday', 'workingday', 'weathersit', 
-    'temp', 'atemp', 'hum', 'windspeed'
-]
-target = 'cnt'
+from data_loader import load_and_preprocess_data
+from models import train_linear_regression, train_svr
+from evaluate import compute_metrics, save_comparison_table, plot_forecast_comparison
 
-# 3. Chronological 80/20 train-test split
-split_idx = int(len(df) * 0.8)
+def main():
+    print("=" * 60)
+    print("ECE 9603/9063 - Assignment 1: Forecasting Master Pipeline")
+    print("=" * 60)
+    
+    # 1. Load and preprocess data
+    print("\n[1/3] Loading and standardizing dataset...")
+    data = load_and_preprocess_data(data_path="data/hour.csv")
+    print(f"      Training samples: {data['train_samples']} (First 80% chronologically)")
+    print(f"      Testing samples:  {data['test_samples']} (Last 20% unseen future)")
+    
+    X_train, X_test = data['X_train'], data['X_test']
+    y_train, y_test = data['y_train'], data['y_test']
+    
+    # 2. Train Model 1: Multivariate Linear Regression
+    print("\n[2/3] Training Model 1: Multivariate Linear Regression (OLS)...")
+    lr_model, y_pred_lr = train_linear_regression(X_train, y_train, X_test)
+    m_lr = compute_metrics(y_test, y_pred_lr, 'Multivariate Linear Regression', 'Parametric / Linear Hyperplane')
+    print(f"      LR -> MAE: {m_lr['MAE (Bikes)']}, RMSE: {m_lr['RMSE (Bikes)']}, R²: {m_lr['R² Score']}")
+    
+    # 3. Train Model 2: Support Vector Regression (SVR)
+    print("\n      Training Model 2: Support Vector Regression (RBF Kernel)...")
+    svr_model, y_pred_svr = train_svr(X_train, y_train, X_test)
+    m_svr = compute_metrics(y_test, y_pred_svr, 'Support Vector Regression (RBF)', 'Non-Parametric / Kernel Dual Space')
+    print(f"      SVR -> MAE: {m_svr['MAE (Bikes)']}, RMSE: {m_svr['RMSE (Bikes)']}, R²: {m_svr['R² Score']}")
+    
+    # 4. Export Comparative Evaluation Table
+    print("\n[3/3] Exporting comparison deliverables...")
+    results_dir = os.path.join("assignment1", "results")
+    table_path = os.path.join(results_dir, "model_comparison_results.csv")
+    comparison_table = save_comparison_table([m_lr, m_svr], table_path)
+    print(f"      Saved table to: {table_path}\n")
+    print(comparison_table.to_string(index=False))
+    
+    # 5. Export 72-Hour Comparative Forecast Plot
+    fig_path = os.path.join(results_dir, "fig2_model_forecast_comparison.png")
+    plot_forecast_comparison(
+        y_test, 
+        {
+            'Multivariate Linear Regression': y_pred_lr,
+            'Support Vector Regression (RBF)': y_pred_svr
+        },
+        fig_path,
+        window_start=100,
+        window_hours=72
+    )
+    print(f"      Saved Figure 2 to: {fig_path}")
+    
+    print("\n" + "=" * 60)
+    print("Pipeline Finished Successfully!")
+    print("=" * 60)
 
-train_df = df.iloc[:split_idx]
-test_df = df.iloc[split_idx:]
-
-X_train = train_df[features]
-y_train = train_df[target].values
-
-X_test = test_df[features]
-y_test = test_df[target].values
-
-print(f"Total dataset samples: {len(df)}")
-print(f"Training set:          {len(X_train)} samples (first 80% chronologically)")
-print(f"Testing set:           {len(X_test)} samples (last 20% unseen future)")
-
-# 4. Standardize features (Mean = 0, Std = 1)
-# Fit strictly on training data, then transform both train and test
-scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
-
-print("\nFeatures standardized successfully!")
-
-# 5. Model 1: Multivariate Linear Regression
-print("\n" + "=" * 50)
-print("Training Model 1: Multivariate Linear Regression")
-print("=" * 50)
-
-lr_model = LinearRegression()
-lr_model.fit(X_train_scaled, y_train)
-
-# Predict on unseen future test set
-y_pred_lr = lr_model.predict(X_test_scaled)
-y_pred_lr = np.clip(y_pred_lr, 0, None)
-
-mae_lr = mean_absolute_error(y_test, y_pred_lr)
-rmse_lr = np.sqrt(mean_squared_error(y_test, y_pred_lr))
-r2_lr = r2_score(y_test, y_pred_lr)
-
-print(f"Linear Regression Results (on Unseen Test Set):")
-print(f"  MAE:  {mae_lr:.2f} bikes")
-print(f"  RMSE: {rmse_lr:.2f} bikes")
-print(f"  R²:   {r2_lr:.4f}")
-
-# 6. Model 2: Support Vector Regression (SVR with RBF Kernel)
-print("\n" + "=" * 50)
-print("Training Model 2: Support Vector Regression (RBF)")
-print("=" * 50)
-
-svr_model = SVR(kernel='rbf', C=100.0, epsilon=10.0)
-svr_model.fit(X_train_scaled, y_train)
-
-# Predict on unseen future test set
-y_pred_svr = svr_model.predict(X_test_scaled)
-y_pred_svr = np.clip(y_pred_svr, 0, None)
-
-mae_svr = mean_absolute_error(y_test, y_pred_svr)
-rmse_svr = np.sqrt(mean_squared_error(y_test, y_pred_svr))
-r2_svr = r2_score(y_test, y_pred_svr)
-
-print(f"SVR Results (on Unseen Test Set):")
-print(f"  MAE:  {mae_svr:.2f} bikes")
-print(f"  RMSE: {rmse_svr:.2f} bikes")
-print(f"  R²:   {r2_svr:.4f}")
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,3 @@
+Model / Algorithm,Model Paradigm,MAE (Bikes),RMSE (Bikes),R² Score
+Multivariate Linear Regression (OLS),Parametric / Linear Hyperplane,138.29,183.28,0.309
+Support Vector Regression (RBF Kernel),Non-Parametric / Kernel Dual Space,111.82,177.04,0.3553
