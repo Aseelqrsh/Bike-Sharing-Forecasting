@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 # 1. Load the dataset
 df = pd.read_csv("data/hour.csv")
@@ -36,3 +38,27 @@ X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
 print("\nFeatures standardized successfully!")
+
+# 5. Model 1: Multivariate Linear Regression
+print("\n" + "=" * 45)
+print("Training Model 1: Multivariate Linear Regression")
+print("=" * 45)
+
+lr_model = LinearRegression()
+lr_model.fit(X_train_scaled, y_train)
+
+# Predict on unseen future test set
+y_pred_lr = lr_model.predict(X_test_scaled)
+
+# Clamping: physical reality check (rentals cannot be negative)
+y_pred_lr = np.clip(y_pred_lr, 0, None)
+
+# Evaluate metrics
+mae_lr = mean_absolute_error(y_test, y_pred_lr)
+rmse_lr = np.sqrt(mean_squared_error(y_test, y_pred_lr))
+r2_lr = r2_score(y_test, y_pred_lr)
+
+print(f"Linear Regression Results (on Unseen Test Set):")
+print(f"  MAE:  {mae_lr:.2f} bikes")
+print(f"  RMSE: {rmse_lr:.2f} bikes")
+print(f"  R²:   {r2_lr:.4f}")
