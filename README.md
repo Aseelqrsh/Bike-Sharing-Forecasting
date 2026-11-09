@@ -25,8 +25,8 @@ Metrics: MAE, RMSE, R². Negative predictions are clipped to 0.
 
 | Member | Responsible for |
 |---|---|
-| _Name 1_ | _e.g. Support Vector Regression_ |
-| _Name 2_ | _e.g. Random Forest Regressor_ |
+| Aseel (Aseelqrsh) | Support Vector Regression |
+| Dhyey Panchal (dhyeypanchal) | Random Forest Regressor |
 | Both | Data preparation, Linear Regression and naive baselines, evaluation |
 
 ## How to run
