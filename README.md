@@ -76,4 +76,5 @@ notebooks/           exploratory notebook (optional)
 ## Use of generative AI
 
 Generative AI (Claude, by Anthropic) was used to help write and restructure the
-code in this repository. The written report was not produced with generative AI.
+code in this repository and to assist with drafting the written report
+(permitted by the instructor). All results and numbers come from running this code.
